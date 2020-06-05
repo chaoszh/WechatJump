@@ -124,3 +124,25 @@ body{
     line-height: 20px;
     color: @black;
 }
+
+.MyToast{
+    z-index: 1;
+    position: fixed;
+    top: 30%;
+    left: calc(50% - 15px);
+    width: 30px;
+    font-size: 50px;
+    font-family: @number;
+    color: @black;
+}
+
+.MyToast.appear{
+    
+}
+
+.MyToast.disappear{
+    opacity: 0;
+    transform: translateY(-20px);
+    transition-duration: 0.25s;
+}
+

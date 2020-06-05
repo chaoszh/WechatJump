@@ -108,8 +108,6 @@ function Game() {
     this.currentFrame = -1;
     this.score = 0;
 
-    this._initScore();
-
     this.failCallback = function () { };
 
     //console test
@@ -483,13 +481,11 @@ Object.assign(Game.prototype, {
                 // 落在当前块上
             } else if (type === 2) {
                 // 成功降落
-                this.score += 1;
-                this._updateScore();
+                this._updateScore(1);
                 this.createCube();
             } else if (type === 3){
                 // 完美降落中心
-                this.score += 4;
-                this._updateScore();
+                this._updateScore(3);
                 this.createCube();
             } else if (type === -2) {
                 // 落到大地上动画
@@ -519,13 +515,27 @@ Object.assign(Game.prototype, {
     },
 
     _initScore: function () {
-        var el = document.createElement('div');
-        el.id = "score";
-        el.innerHTML = '0';
-        document.body.appendChild(el);
+        let el = document.querySelector('#score');
+        if(el){
+            el.innerHTML = '0';
+        }else{
+            el = document.createElement('div');
+            el.id = "score";
+            el.innerHTML = '0';
+            document.body.appendChild(el);
+        }
     },
 
-    _updateScore: function () {
+    _updateScore: function (digit) {
+        // 显示toast
+        let t = document.querySelector('.MyToast');
+        t.innerHTML = `+${digit}`;
+        t.classList.remove('disappear');
+        setTimeout(() => {
+            t.classList.add('disappear');
+        }, 250);
+        // 提高分数
+        this.score+=digit;
         document.getElementById('score').innerHTML = this.score;
     },
 
@@ -535,7 +545,9 @@ Object.assign(Game.prototype, {
         this.createCube();
         this.createJumper();
         this._registerEvent();
-        this._updateScore();
+        this._initScore();
+
+        // this._updateScore(0);
     },
 
     restart: function () {
@@ -564,7 +576,8 @@ Object.assign(Game.prototype, {
         this.createCube();
         this.createCube();
         this.createJumper();
-        this._updateScore();
+        this._initScore();
+        // this._updateScore(0);
     },
 
     resetJumper: function () {
