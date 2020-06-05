@@ -6,9 +6,9 @@ function init(){
 
       var startpage = document.querySelector('.startPage');
       var restartpage = document.querySelector('.restartPage');
-      var startBtn = document.querySelector('.startBtn');
-      var restartBtn = document.querySelector('.restartBtn');
-      var scoreEl = document.querySelector('.scoreNum');
+      var startBtn = document.querySelector('.start-btn');
+      var restartBtn = document.querySelector('.restart-btn');
+      var scoreEl = document.querySelector('.score');
     
       startpage.style.display = 'flex';
       restartpage.style.display = 'none';

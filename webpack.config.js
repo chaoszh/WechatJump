@@ -66,7 +66,11 @@ module.exports = {
                 }, {
                     loader: "less-loader" // compiles Less to CSS
                 }]
-            }
+            },
+            {
+                test: /\.(eot|svg|ttf|woff|woff2|otf)$/,
+                use: 'url-loader'
+            },
         ]
     }
 };

@@ -19,12 +19,25 @@ function Game() {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.antialias = true;
     document.body.appendChild(this.renderer.domElement);
     this.canvas = this.renderer.domElement;
 
     // 灯光
     var directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
-    directionalLight.position.set(15, 10, 8);
+    directionalLight.position.set(2, 5, -2);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.near = 0; //产生阴影的最近距离
+    directionalLight.shadow.camera.far = 100; //产生阴影的最远距离
+    let d = 100;
+    directionalLight.shadow.camera.left = -d; //产生阴影距离位置的最左边位置
+    directionalLight.shadow.camera.right = d; //最右边
+    directionalLight.shadow.camera.top = d; //最上边
+    directionalLight.shadow.camera.bottom = -d; //最下面
+    console.log(directionalLight.shadow.mapSize)
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
     this.scene.add(directionalLight);
     var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
@@ -47,7 +60,7 @@ function Game() {
         // 设置缓存数组最大缓存多少个图形
         cubeMaxLen: 6,
         // 立方体内边缘之间的最小距离和最大距离
-        cubeMinDis: 2.5,
+        cubeMinDis: 2,
         cubeMaxDis: 5,
 
         // 模型Config
@@ -67,7 +80,7 @@ function Game() {
     // mousedown : -1
     // mouseup : 1
     this.JUMP_FRAME_NUM = 40;
-    this.ADDSPEED = 0.004;
+    this.ADDSPEED = 0.005;
     this.accelerate = {
         x: 0,       //水平匀速运动
         y: 0.02,   //固定值
@@ -86,6 +99,9 @@ function Game() {
 
     this.failCallback = function () { };
 
+    //console test
+    window.jumper = this.jumper;
+    window.models = this.models;
 }
 
 Game.prototype.constructor = Game;
@@ -186,14 +202,12 @@ Object.assign(Game.prototype, {
             this.scene.remove(this.cubes.shift());
         }
         let _this = this;
-        setTimeout(()=>{
-            if (_this.cubes.length > 1) {
-                // 更新相机位置
-                _this._updateCameraPos();
-            } else {
-                _this.camera.lookAt(this.cameraPos.current);
-            }
-        }, 0)
+        if (_this.cubes.length > 1) {
+            // 更新相机位置
+            _this._updateCameraPos();
+        } else {
+            _this.camera.lookAt(this.cameraPos.current);
+        }
     },
 
     // 创建一个弹跳体
@@ -204,6 +218,8 @@ Object.assign(Game.prototype, {
         var mesh = new THREE.Mesh(geometry, material);
         geometry.translate(0, this.config.jumpHeight / 2, 0);
         mesh.position.set(0, this.config.jumpHeight / 2, 0);
+        mesh.castShadow=true;
+        mesh.receiveShadow=true;
         this.jumper = mesh;
         this.scene.add(mesh);
         this._render();
@@ -214,29 +230,38 @@ Object.assign(Game.prototype, {
         // console.log(this.config.modelConfig)
 
         let name = this.getRandomItem(this.config.modelConfig.objList).ele;
-        // name = 'd_xiaoniao'
-        let objConfig = this.config.modelConfig[name];
+
+        //BUG HERE
+        //没有Object create时，objConfig是一样的，第一个模型还没加载上第二个模型的位置参数就覆盖了它，因此两个会重叠在同一位置！
+        let objConfig = Object.create(this.config.modelConfig[name]);
         
-        console.log(`${name}`, position.x, position.y, position.z)
-        console.log(`${name}`, objConfig.position)
-        objConfig.position = {
-            x: position.x,
-            y: position.y,
-            z: position.z
-        }
-        console.log(`${name}`, objConfig.position)
-        // objConfig.position = {
-        //     x: 0,
-        //     y: 0,
-        //     z: 0
-        // }
-        
+        // console.log(`${name}`, position.x, position.y, position.z)
+        // console.log(`${name}`, objConfig.position)
+        objConfig.position = position;
+        // console.log(`${name}`, objConfig.position)
         // console.log(objConfig.position == position)
-        console.log(`${name}`, objConfig, position)
+        // console.log(`${name}`, objConfig, position)
+        
+        // if(window.test){
+        //     window.test.push(objConfig)
+        // }else{
+        //     window.test=[];
+        //     window.test.push(objConfig)
+        // }
 
         //callback
         let addModelToGame = (obj) => {
-            window.n = obj;
+            //添加阴影
+            obj.children.forEach(element => {
+                element.traverse(function(o) {
+                    if (o.type === 'Mesh') {
+                        o.castShadow=true;
+                        o.receiveShadow=true;
+                    }
+                })
+            });
+
+            //设置参数
             obj.scale.x = objConfig.scale.x;
             obj.scale.y = objConfig.scale.y;
             obj.scale.z = objConfig.scale.z;
@@ -285,6 +310,23 @@ Object.assign(Game.prototype, {
         });
         // 从场景中删除
         this.scene.remove(model);
+    },
+
+    createPlane: function(){
+        var planeGeo = new THREE.PlaneGeometry(100,100,10,10);//创建平面
+        var planeMat = new THREE.MeshLambertMaterial({  //创建材料
+            color:0xFFFF33,
+            wireframe:false
+        });
+        var planeMesh = new THREE.Mesh(planeGeo, planeMat);//创建网格模型
+        planeMesh.position.set(0, -this.config.cubeY/2, 0);//设置平面的坐标
+        planeMesh.rotation.x = -0.5 * Math.PI;//将平面绕X轴逆时针旋转90度
+        planeMesh.receiveShadow = true;//允许接收阴影
+        // planeMesh.castShadow = true;//允许接收阴影
+        this.scene.add(planeMesh);//将平面添加到场景中
+
+        //测试阴影
+
     },
 
     _render: function () {
@@ -407,9 +449,14 @@ Object.assign(Game.prototype, {
             this.resetJumper();
             if (type === 1) {
                 // 落在当前块上
-            } else if (type === 2 || type === 3) {
+            } else if (type === 2) {
                 // 成功降落
                 this.score += 1;
+                this._updateScore();
+                this.createCube();
+            } else if (type === 3){
+                // 完美降落中心
+                this.score += 4;
                 this._updateScore();
                 this.createCube();
             } else if (type === -2) {
@@ -451,6 +498,7 @@ Object.assign(Game.prototype, {
     },
 
     start: function () {
+        this.createPlane();
         this.createCube();
         this.createCube();
         this.createJumper();
@@ -546,7 +594,7 @@ Object.assign(Game.prototype, {
     * 根据落点判断是否成功或失败，共分为以下几种情况
     * 返回值 1： 成功，但落点仍然在当前块上
     * 返回值 2： 成功，落点在下一个块上
-    * 返回值 3： 成功，落点在中心点 （先不考虑，后续优化）
+    * 返回值 3： 成功，落点在中心点
     * 返回值 -1：失败，落点在当前块边缘 或 在下一个块外边缘
     * 返回值 -2：失败，落点在当前块与下一块之间 或 在下一个块之外
     * 返回值 -3：失败，落点在下一个块内边缘
@@ -568,7 +616,11 @@ Object.assign(Game.prototype, {
         } else if (d < d2 && Math.abs(d - d2) < jumpR) {
             return -3;
         } else if (d > d2 && d <= d4) {
-            return 2;
+            //完美落点
+            if (d >= (d3 - 0.2) && d <= (d3 + 0.2)){
+                return 3;
+            }
+            else return 2;
         } else if (d > d4 && Math.abs(d - d4) < jumpR) {
             return -1;
         } else {
