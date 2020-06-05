@@ -12,10 +12,17 @@ function Game() {
         window.innerHeight / -60,
         0.1, 5000);
     this.camera.position.set(100, 100, 100);
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0))
     this.cameraPos = {
         current: new THREE.Vector3(0, 0, 0), // 摄像机当前的坐标
         next: new THREE.Vector3() // 摄像机即将要移到的位置
     };
+    this.cameraSpeed = {
+        x: 0,
+        y: 0,
+        z: 0
+    }
+    this.CAMERA_MOVE_TIME = 40;
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -28,7 +35,6 @@ function Game() {
     var directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
     directionalLight.position.set(2, 5, -2);
     directionalLight.castShadow = true;
-    console.log(directionalLight.shadow)
     directionalLight.shadow.camera.near = 0; //产生阴影的最近距离
     directionalLight.shadow.camera.far = 100; //产生阴影的最远距离
     let d = 15;
@@ -36,7 +42,6 @@ function Game() {
     directionalLight.shadow.camera.right = d; //最右边
     directionalLight.shadow.camera.top = d; //最上边
     directionalLight.shadow.camera.bottom = -d; //最下面
-    console.log(directionalLight.shadow.mapSize)
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
     this.scene.add(directionalLight);
@@ -103,6 +108,8 @@ function Game() {
     //console test
     window.jumper = this.jumper;
     window.models = this.models;
+    window.camera = this.camera;
+    window.cameraPos = this.cameraPos;
 }
 
 Game.prototype.constructor = Game;
@@ -276,7 +283,9 @@ Object.assign(Game.prototype, {
 
             // 如果缓存图形数大于最大缓存数，去掉一个
             _this.models.push(obj);
-            if (_this.cubes.length > _this.config.cubeMaxLen) {
+            
+            // console.log('shift models', _this.cubes.length, _this.config.cubeMaxLen)
+            if (_this.models.length > _this.config.cubeMaxLen) {
                 _this.removeModel(_this.models[0]);
                 _this.models.shift();
             }
@@ -335,44 +344,56 @@ Object.assign(Game.prototype, {
     },
 
     _updateCameraPos: function () {
-        var a = this.cubes[this.cubes.length - 2];
-        var b = this.cubes[this.cubes.length - 1];
-        var toPos = {
-            x: (a.position.x + b.position.x) / 2,
+
+        let a = this.cubes[this.cubes.length - 2];
+        let b = this.cubes[this.cubes.length - 1];
+        let dis = {
+            x: b.position.x - a.position.x,
             y: 0,
-            z: (a.position.z + b.position.z) / 2
-        };
-        this.cameraPos.next = new THREE.Vector3(toPos.x, toPos.y, toPos.z);
-        this._updateCamera();
+            z: b.position.z - a.position.z
+        }
+        this.cameraPos.current = {
+            x: this.camera.position.x,
+            y: this.camera.position.y,
+            z: this.camera.position.z,
+        }
+        this.cameraPos.next = {
+            x: this.camera.position.x + dis.x,
+            y: 0,
+            z: this.camera.position.z + dis.z,
+        }
+        this.cameraSpeed = {
+            x: dis.x / this.CAMERA_MOVE_TIME,
+            y: 0,
+            z: dis.z / this.CAMERA_MOVE_TIME,
+        }
+        this._updateCamera(0);
     },
 
-    _updateCamera: function () {
-        var self = this;
-        var c = {
-            x: self.cameraPos.current.x,
-            y: self.cameraPos.current.y,
-            z: self.cameraPos.current.z
-        };
-        var n = {
-            x: self.cameraPos.next.x,
-            y: self.cameraPos.next.y,
-            z: self.cameraPos.next.z
-        };
-        if (c.x < n.x || c.z > n.z) {
-            if (c.x < n.x) self.cameraPos.current.x += 0.1;
-            if (c.z > n.z) self.cameraPos.current.z -= 0.1;
-            if (Math.abs(self.cameraPos.current.x - self.cameraPos.next.x) < 0.05) {
-                self.cameraPos.current.x = self.cameraPos.next.x;
-            }
-            if (Math.abs(self.cameraPos.current.z - self.cameraPos.next.z) < 0.05) {
-                self.cameraPos.current.z = self.cameraPos.next.z;
-            }
-            self.camera.lookAt(new THREE.Vector3(c.x, 0, c.z));
-            self._render();
-            requestAnimationFrame(function () {
-                self._updateCamera();
-            });
+    _updateCamera: function (frame) {
+        if(frame > this.CAMERA_MOVE_TIME){
+            return
+        }else frame+=1;
+        
+        let dir = this.getDirection();
+        if(dir === 'x'){
+            let dis = Tween.prototype.Quart.easeInOut(frame, this.cameraPos.current.x, this.cameraPos.next.x-this.cameraPos.current.x, this.CAMERA_MOVE_TIME);
+            // console.log(this.cameraPos, dis, frame, this.CAMERA_MOVE_TIME)
+            this.camera.position.x = dis;
+        }else if(dir === 'z'){
+            let dis = Tween.prototype.Quart.easeInOut(frame, this.cameraPos.current.z, this.cameraPos.next.z - this.cameraPos.current.z, this.CAMERA_MOVE_TIME);
+            this.camera.position.z = dis;
         }
+        
+        // this.camera.position.x = this.camera.position.x + this.cameraSpeed.x;
+        // this.camera.position.z = this.camera.position.z + this.cameraSpeed.z;
+        
+        this._render();
+
+        let _this = this;
+        requestAnimationFrame(function () {
+            _this._updateCamera(frame);
+        });
     },
 
     _registerEvent: function () {
@@ -754,6 +775,10 @@ Object.assign(Game.prototype, {
     getRotation: function () {
         let time = this.currentFrame;
         return -Tween.prototype.Quint.easeInOut(time, 0, 2 * Math.PI, 40);
+    },
+
+    getXXX: function(a,b,c,d){
+        return Tween.prototype.Quint.easeInOut(a,b,c,d);
     },
 
     testPosition: function (position) {
