@@ -28,9 +28,10 @@ function Game() {
     var directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
     directionalLight.position.set(2, 5, -2);
     directionalLight.castShadow = true;
+    console.log(directionalLight.shadow)
     directionalLight.shadow.camera.near = 0; //产生阴影的最近距离
     directionalLight.shadow.camera.far = 100; //产生阴影的最远距离
-    let d = 100;
+    let d = 15;
     directionalLight.shadow.camera.left = -d; //产生阴影距离位置的最左边位置
     directionalLight.shadow.camera.right = d; //最右边
     directionalLight.shadow.camera.top = d; //最上边
