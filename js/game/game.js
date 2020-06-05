@@ -4,6 +4,8 @@ import { Tween } from '../lib/Tween'
 import { OBJLoader, MTLLoader } from 'three-obj-mtl-loader'
 function Game() {
     this.scene = new THREE.Scene();
+    this.group = new THREE.Group();
+    this.scene.add(this.group);
 
     this.camera = new THREE.OrthographicCamera(
         window.innerWidth / -60,
@@ -23,6 +25,11 @@ function Game() {
         z: 0
     }
     this.CAMERA_MOVE_TIME = 40;
+
+    this.groupPos = {
+        current: null,
+        next: null
+    }
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -110,6 +117,7 @@ function Game() {
     window.models = this.models;
     window.camera = this.camera;
     window.cameraPos = this.cameraPos;
+    window.group = this.group;
 }
 
 Game.prototype.constructor = Game;
@@ -203,11 +211,11 @@ Object.assign(Game.prototype, {
         //渲染
         this.testPosition(mesh.position);
         this.cubes.push(mesh);
-        this.scene.add(mesh);
+        this.group.add(mesh);
         this._render();
         // 如果缓存图形数大于最大缓存数，去掉一个
         if (this.cubes.length > this.config.cubeMaxLen) {
-            this.scene.remove(this.cubes.shift());
+            this.group.remove(this.cubes.shift());
         }
         let _this = this;
         if (_this.cubes.length > 1) {
@@ -229,7 +237,7 @@ Object.assign(Game.prototype, {
         mesh.castShadow=true;
         mesh.receiveShadow=true;
         this.jumper = mesh;
-        this.scene.add(mesh);
+        this.group.add(mesh);
         this._render();
     },
 
@@ -279,7 +287,7 @@ Object.assign(Game.prototype, {
             obj.position.x = objConfig.position.x;
             obj.position.y = objConfig.position.y;
             obj.position.z = objConfig.position.z;
-            _this.scene.add(obj);
+            _this.group.add(obj);
 
             // 如果缓存图形数大于最大缓存数，去掉一个
             _this.models.push(obj);
@@ -319,7 +327,7 @@ Object.assign(Game.prototype, {
             })
         });
         // 从场景中删除
-        this.scene.remove(model);
+        this.group.remove(model);
     },
 
     createPlane: function(){
@@ -334,9 +342,6 @@ Object.assign(Game.prototype, {
         planeMesh.receiveShadow = true;//允许接收阴影
         // planeMesh.castShadow = true;//允许接收阴影
         this.scene.add(planeMesh);//将平面添加到场景中
-
-        //测试阴影
-
     },
 
     _render: function () {
@@ -352,21 +357,26 @@ Object.assign(Game.prototype, {
             y: 0,
             z: b.position.z - a.position.z
         }
-        this.cameraPos.current = {
-            x: this.camera.position.x,
-            y: this.camera.position.y,
-            z: this.camera.position.z,
+        this.groupPos.current = {
+            x: this.group.position.x,
+            y: this.group.position.y,
+            z: this.group.position.z,
         }
-        this.cameraPos.next = {
-            x: this.camera.position.x + dis.x,
+        this.groupPos.next = {
+            x: this.group.position.x - dis.x,
             y: 0,
-            z: this.camera.position.z + dis.z,
+            z: this.group.position.z - dis.z,
         }
-        this.cameraSpeed = {
-            x: dis.x / this.CAMERA_MOVE_TIME,
-            y: 0,
-            z: dis.z / this.CAMERA_MOVE_TIME,
-        }
+        // this.cameraPos.current = {
+        //     x: this.camera.position.x,
+        //     y: this.camera.position.y,
+        //     z: this.camera.position.z,
+        // }
+        // this.cameraPos.next = {
+        //     x: this.camera.position.x + dis.x,
+        //     y: 0,
+        //     z: this.camera.position.z + dis.z,
+        // }
         this._updateCamera(0);
     },
 
@@ -377,12 +387,12 @@ Object.assign(Game.prototype, {
         
         let dir = this.getDirection();
         if(dir === 'x'){
-            let dis = Tween.prototype.Quart.easeInOut(frame, this.cameraPos.current.x, this.cameraPos.next.x-this.cameraPos.current.x, this.CAMERA_MOVE_TIME);
+            let dis = Tween.prototype.Quart.easeInOut(frame, this.groupPos.current.x, this.groupPos.next.x-this.groupPos.current.x, this.CAMERA_MOVE_TIME);
             // console.log(this.cameraPos, dis, frame, this.CAMERA_MOVE_TIME)
-            this.camera.position.x = dis;
+            this.group.position.x = dis;
         }else if(dir === 'z'){
-            let dis = Tween.prototype.Quart.easeInOut(frame, this.cameraPos.current.z, this.cameraPos.next.z - this.cameraPos.current.z, this.CAMERA_MOVE_TIME);
-            this.camera.position.z = dis;
+            let dis = Tween.prototype.Quart.easeInOut(frame, this.groupPos.current.z, this.groupPos.next.z - this.groupPos.current.z, this.CAMERA_MOVE_TIME);
+            this.group.position.z = dis;
         }
         
         // this.camera.position.x = this.camera.position.x + this.cameraSpeed.x;
@@ -530,13 +540,15 @@ Object.assign(Game.prototype, {
 
     restart: function () {
         for (var i = 0, len = this.cubes.length; i < len; i++) {
-            this.scene.remove(this.cubes[i]);
+            this.group.remove(this.cubes[i]);
         }
         for (var i = 0, len = this.models.length; i < len; i++) {
             this.removeModel(this.models[i]);
         }
         this.models.length = 0;
-        this.scene.remove(this.jumper);
+        this.group.remove(this.jumper);
+        this.group.position.x=0;
+        this.group.position.z=0;
 
         this.cameraPos = {
             current: new THREE.Vector3(0, 0, 0), // 摄像机当前的坐标
@@ -775,10 +787,6 @@ Object.assign(Game.prototype, {
     getRotation: function () {
         let time = this.currentFrame;
         return -Tween.prototype.Quint.easeInOut(time, 0, 2 * Math.PI, 40);
-    },
-
-    getXXX: function(a,b,c,d){
-        return Tween.prototype.Quint.easeInOut(a,b,c,d);
     },
 
     testPosition: function (position) {
