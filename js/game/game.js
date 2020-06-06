@@ -1,6 +1,7 @@
 const THREE = require('three')
 import { ModelConfig } from './modelConfig'
 import { Tween } from '../lib/Tween'
+import { AudioManager } from './audioManager'
 import { OBJLoader, MTLLoader } from 'three-obj-mtl-loader'
 function Game() {
     this.scene = new THREE.Scene();
@@ -77,7 +78,7 @@ function Game() {
         cubeMaxDis: 5,
 
         // 模型Config
-        modelConfig:  ModelConfig.prototype,
+        modelConfig:  new ModelConfig(),
     };
 
     this.mouse = {
@@ -110,6 +111,7 @@ function Game() {
 
     this.failCallback = function () { };
 
+    this.audioManager = new AudioManager();
     //console test
     window.jumper = this.jumper;
     window.models = this.models;
@@ -340,6 +342,8 @@ Object.assign(Game.prototype, {
         planeMesh.receiveShadow = true;//允许接收阴影
         // planeMesh.castShadow = true;//允许接收阴影
         this.scene.add(planeMesh);//将平面添加到场景中
+
+        this.audioManager.play('start');
     },
 
     _render: function () {
@@ -439,11 +443,13 @@ Object.assign(Game.prototype, {
                 if (this.mouseState === -1) this._onMouseDown();
             }.bind(this));
         }
+        this.audioManager.play('push');
     },
 
     _onMouseUp: function () {
         var self = this;
         this.mouseState = 1;
+        this.audioManager.stop('push');
         if (this.jumper.position.y >= this.config.jumpHeight / 2) {
             // jumper还在空中运动
             this.currentFrame = this.currentFrame + 1;
@@ -483,12 +489,16 @@ Object.assign(Game.prototype, {
                 // 成功降落
                 this._updateScore(1);
                 this.createCube();
+                this.audioManager.play('success');
             } else if (type === 3){
                 // 完美降落中心
                 this._updateScore(3);
                 this.createCube();
+                this.audioManager.play('success');
+                this.audioManager.play(this.getRandomItem(['cool', 'perfect']).ele);
             } else if (type === -2) {
                 // 落到大地上动画
+                this.audioManager.play('fail');
                 function continuefalling() {
                     if (self.jumper.position.y >= -self.config.jumpHeight / 2) {
                         self.jumper.position.y -= 0.06;
@@ -504,6 +514,7 @@ Object.assign(Game.prototype, {
                 }
             } else {
                 // 落到边缘处
+                this.audioManager.play('fail');
                 this.failingAnimation(type);
                 if (this.failCallback) {
                     setTimeout(function () {
@@ -546,7 +557,7 @@ Object.assign(Game.prototype, {
         this.createJumper();
         this._registerEvent();
         this._initScore();
-
+        // this.audioManager.play('bg');
         // this._updateScore(0);
     },
 
@@ -811,8 +822,8 @@ Object.assign(Game.prototype, {
     isPC: function () {
         var userAgentInfo = navigator.userAgent;
         var Agents = ["Android", "iPhone",
-            "SymbianOS", "Windows Phone",
-            "iPad", "iPod"];
+        "SymbianOS", "Windows Phone",
+        "iPad", "iPod"];
         var flag = true;
         for (var v = 0; v < Agents.length; v++) {
             if (userAgentInfo.indexOf(Agents[v]) > 0) {
@@ -820,6 +831,7 @@ Object.assign(Game.prototype, {
                 break;
             }
         }
+        // console.log(userAgentInfo, flag)
         return flag;
     },
 });

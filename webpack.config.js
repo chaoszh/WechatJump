@@ -71,6 +71,9 @@ module.exports = {
                 test: /\.(eot|svg|ttf|woff|woff2|otf)$/,
                 use: 'url-loader'
             },
-        ]
+        ],
+    },
+    externals: {
+        createjs: 'createjs'
     }
 };
