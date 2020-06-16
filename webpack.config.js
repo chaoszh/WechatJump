@@ -2,19 +2,33 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 
 module.exports = {
     // mode: 'production',
     mode: 'development',
     entry: {
-        main: './js/main.js'
+        style: './js/style.js',
+        main: './js/main.js',
+        vendor: ['three', 'three-obj-mtl-loader']
     },
     output: {
-        filename: 'bundle.js',
+        filename: '[name].js',
         path: path.join(__dirname, "/dist")
     },
-    ///copy html
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+                vendor: {
+                    name: 'vendor',
+                    test: /three/,
+                    chunks: 'all',
+                }
+            }
+        },
+        runtimeChunk: false
+    },
     plugins: [
         new HtmlWebpackPlugin({
             template: './index.html',
@@ -24,16 +38,8 @@ module.exports = {
             from: './res',
             to: './res'
         }]),
-        // to 是相对于 output.path 的
-        // new CopyWebpackPlugin([{
-        //     from: './web/libs',
-        //     to: './libs'
-        // }]),
-        // new CopyWebpackPlugin([{
-        //     from: './web/res',
-        //     to: './res'
-        // }]),
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.HotModuleReplacementPlugin(),
+        new BundleAnalyzerPlugin()
     ],
     devServer: {
         contentBase: path.join(__dirname, "/dist"),

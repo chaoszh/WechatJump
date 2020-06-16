@@ -1,8 +1,11 @@
 const THREE = require('three')
-import { ModelConfig } from './modelConfig'
-import { Tween } from '../lib/Tween'
-import { AudioManager } from './audioManager'
-import { OBJLoader, MTLLoader } from 'three-obj-mtl-loader'
+const ModelConfig = require('./modelConfig')
+const Tween = new (require('../lib/Tween'))()
+const AudioManager = require('./audioManager')
+const ThreeObjMtlLoader = require('three-obj-mtl-loader')
+const OBJLoader = ThreeObjMtlLoader.OBJLoader
+const MTLLoader = ThreeObjMtlLoader.MTLLoader
+
 function Game() {
     this.scene = new THREE.Scene();
     this.group = new THREE.Group();
@@ -112,6 +115,7 @@ function Game() {
     this.failCallback = function () { };
 
     this.audioManager = new AudioManager();
+    console.log(AudioManager)
     //console test
     window.jumper = this.jumper;
     window.models = this.models;
@@ -389,11 +393,11 @@ Object.assign(Game.prototype, {
         
         let dir = this.getDirection();
         if(dir === 'x'){
-            let dis = Tween.prototype.Quart.easeInOut(frame, this.groupPos.current.x, this.groupPos.next.x-this.groupPos.current.x, this.CAMERA_MOVE_TIME);
+            let dis = Tween.Quart.easeInOut(frame, this.groupPos.current.x, this.groupPos.next.x-this.groupPos.current.x, this.CAMERA_MOVE_TIME);
             // console.log(this.cameraPos, dis, frame, this.CAMERA_MOVE_TIME)
             this.group.position.x = dis;
         }else if(dir === 'z'){
-            let dis = Tween.prototype.Quart.easeInOut(frame, this.groupPos.current.z, this.groupPos.next.z - this.groupPos.current.z, this.CAMERA_MOVE_TIME);
+            let dis = Tween.Quart.easeInOut(frame, this.groupPos.current.z, this.groupPos.next.z - this.groupPos.current.z, this.CAMERA_MOVE_TIME);
             this.group.position.z = dis;
         }
         
@@ -809,7 +813,7 @@ Object.assign(Game.prototype, {
 
     getRotation: function () {
         let time = this.currentFrame;
-        return -Tween.prototype.Quint.easeInOut(time, 0, 2 * Math.PI, 40);
+        return -Tween.Quint.easeInOut(time, 0, 2 * Math.PI, 40);
     },
 
     testPosition: function (position) {
@@ -835,6 +839,4 @@ Object.assign(Game.prototype, {
     },
 });
 
-export {
-    Game
-}
+module.exports = Game

@@ -19,8 +19,6 @@ var AudioManager = function () {
     
     this._registerMusic();
     this._initMusicInstance();
-
-    window.ins = this.instances;
 }
 
 Object.assign(AudioManager.prototype, {
@@ -60,6 +58,4 @@ Object.assign(AudioManager.prototype, {
     }
 })
 
-export {
-    AudioManager
-}
+module.exports = AudioManager

@@ -1,4 +1,4 @@
-import { Game } from './game'
+const Game = require('./game')
 
 function init() {
     window.onload = function () {
@@ -31,6 +31,6 @@ function init() {
     };
 }
 
-export {
+module.exports = {
     init
 }

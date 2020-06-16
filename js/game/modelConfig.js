@@ -145,6 +145,4 @@ ModelConfig.prototype = {
     cd: DEFAULT
 }
 
-export {
-    ModelConfig
-}
+module.exports = ModelConfig

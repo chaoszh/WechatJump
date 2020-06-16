@@ -186,6 +186,4 @@ Tween.prototype = {
     }
 };
 
-export{
-    Tween
-}
+module.exports = Tween
