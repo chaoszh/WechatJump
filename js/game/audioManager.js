@@ -31,13 +31,15 @@ Object.assign(AudioManager.prototype, {
         });
         for(let i=0;i<this.audioConfig.length;i++){
             let c = this.audioConfig[i];
-            this.SoundJS.registerSound(`../../res/audio/${c}.mp3`, c, i);
+            // this.SoundJS.registerSound(`../../res/audio/${c}.mp3`, c, i);
+            this.SoundJS.registerSound(`./res/audio/${c}.mp3`, c, i);
         }
     },
     _initMusicInstance: function(){
         for(let i=0;i<this.audioConfig.length;i++){
             let c = this.audioConfig[i];
-            let instance = this.SoundJS.play(`../../res/audio/${c}.mp3`);
+            // let instance = this.SoundJS.play(`../../res/audio/${c}.mp3`);
+            let instance = this.SoundJS.play(`./res/audio/${c}.mp3`);
             this.instances[c] = instance;
         }
     },

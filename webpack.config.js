@@ -81,5 +81,5 @@ module.exports = {
     },
     externals: {
         createjs: 'createjs'
-    }
+    },
 };

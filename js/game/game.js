@@ -115,7 +115,6 @@ function Game() {
     this.failCallback = function () { };
 
     this.audioManager = new AudioManager();
-    console.log(AudioManager)
     //console test
     window.jumper = this.jumper;
     window.models = this.models;
@@ -592,6 +591,7 @@ Object.assign(Game.prototype, {
         this.createCube();
         this.createJumper();
         this._initScore();
+        this.audioManager.play('start');
         // this._updateScore(0);
     },
 
