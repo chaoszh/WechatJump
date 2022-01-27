@@ -24,7 +24,7 @@
     "less": "^3.11.2",
     "less-loader": "^6.1.0",
     "style-loader": "^1.2.1",
-    "three": "^0.117.1",
+    "three": "^0.137.0",
     "three-obj-mtl-loader": "^1.0.3",
     "url-loader": "^4.1.0",
     "webpack": "^4.43.0",
